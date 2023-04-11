@@ -8,6 +8,8 @@ import jiny.restapi.modules.common.response.CommonResult;
 import jiny.restapi.modules.common.response.ResponseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +22,11 @@ public class SignController {
     private final ResponseService responseService;
 
     @PostMapping(value = "/signUp")
-    public CommonResult signUp(@RequestBody SignUpForm signUpForm) {
+    public CommonResult signUp(@RequestBody @Validated SignUpForm signUpForm, BindingResult bindingResult) {
+
+        if(bindingResult.hasErrors()){
+            return responseService.getFailResult(400,"유효한 값을 입력해주세요");
+        }
 
         Account account = accountService.signUp(signUpForm);
         log.info(signUpForm.getEmail()+" "+signUpForm.getNickname()+" "+signUpForm.getPassword());
