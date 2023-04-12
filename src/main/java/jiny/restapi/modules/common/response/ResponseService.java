@@ -25,7 +25,7 @@ public class ResponseService {
         return result;
     }
 
-    public <T> ListResult<T> getSingleResult(List<T> data){
+    public <T> ListResult<T> getListResult(List<T> data){
         ListResult<T> result = new ListResult<>();
         result.setList(data);
         setSuccessData(result);
