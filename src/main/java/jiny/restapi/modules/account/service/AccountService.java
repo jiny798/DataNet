@@ -1,6 +1,7 @@
 package jiny.restapi.modules.account.service;
 
 import jiny.restapi.modules.account.controller.dto.SignUpForm;
+import jiny.restapi.modules.account.controller.exception.DuplicatedAccountEx;
 import jiny.restapi.modules.account.domain.UserAccount;
 import jiny.restapi.modules.account.domain.entity.Account;
 import jiny.restapi.modules.account.repo.AccountRepo;
@@ -47,14 +48,14 @@ public class AccountService implements UserDetailsService {
     private void validateDuplicatedEmail(Account account){
         Account findAccount = accountRepo.findByEmail(account.getEmail());
         if (findAccount != null) {
-            throw new IllegalStateException("이미 존재하는 이메일입니다.");
+            throw new DuplicatedAccountEx("이미 존재하는 이메일입니다.");
         }
     }
 
     private void validateDuplicatedNickname(Account account){
         Account findAccount = accountRepo.findByNickname(account.getNickname());
         if (findAccount != null) {
-            throw new IllegalStateException("이미 존재하는 닉네임입니다.");
+            throw new DuplicatedAccountEx("이미 존재하는 닉네임입니다.");
         }
     }
 }
