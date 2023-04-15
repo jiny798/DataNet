@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -36,12 +37,13 @@ public class JwtTokenProvider {
         claims.put("roles",roles);
         Date now = new Date();
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime()+tokenValidTime))
                 .signWith(SignatureAlgorithm.HS256,secretKey)
                 .compact();
+        return token;
     }
 
     public Authentication getAuthentication(String token){
@@ -50,11 +52,16 @@ public class JwtTokenProvider {
     }
 
     public String getUserId(String token){
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJwt(token).getBody().getSubject();
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
     public String resolveToken(HttpServletRequest request){
-        return request.getHeader("X-AUTH-TOKEN");
+        String bearerToken = request.getHeader("Authorization");
+        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")){
+            return bearerToken.substring(7);
+        }
+        return null;
+//        return request.getHeader("Authorization");
     }
 
     public boolean validateToken(String jwtToken){
