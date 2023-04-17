@@ -1,4 +1,4 @@
-package jiny.restapi.modules.account.controller.exception;
+package jiny.restapi.modules.common.exception.account;
 
 public class DuplicatedAccountEx extends RuntimeException{
 
