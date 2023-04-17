@@ -14,7 +14,7 @@ public class SignUpForm {
 
     @NotBlank
     @Length(min = 3, max = 20)
-    @Pattern(regexp = "^[ㄱ-ㅎ가-힣a-z0-9_-]{3,20}$")  @Schema(description = "닉네임 3-20자", example = "abd223")
+    @Pattern(regexp = "^[가-힣a-z0-9_-]{3,20}$")  @Schema(description = "닉네임 3-20자", example = "abd223")
     private String nickname;
 
     @Email
