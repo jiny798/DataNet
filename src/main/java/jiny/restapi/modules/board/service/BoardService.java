@@ -2,15 +2,15 @@ package jiny.restapi.modules.board.service;
 
 import jiny.restapi.modules.account.domain.entity.Account;
 import jiny.restapi.modules.account.repo.AccountRepo;
-import jiny.restapi.modules.board.controller.dto.BoardRequestDto;
-import jiny.restapi.modules.board.controller.dto.BoardResponseDto;
-import jiny.restapi.modules.board.controller.dto.PostRequestDto;
-import jiny.restapi.modules.board.controller.dto.PostResponseDto;
+import jiny.restapi.modules.board.controller.dto.*;
 import jiny.restapi.modules.board.domain.Board;
 import jiny.restapi.modules.board.domain.Post;
 import jiny.restapi.modules.board.repo.BoardJpaRepo;
 import jiny.restapi.modules.board.repo.PostJpaRepo;
+import jiny.restapi.modules.common.exception.board.DeniedAccessEx;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,38 +54,79 @@ public class BoardService {
         return dto_list;
     }
 
-    public Post getPost(long postId) {
-        return postRepo.findById(postId).orElseThrow();
+    //게시글 상세 조회
+    public PostResponseDto getPost(long postId) {
+        Post findPost = postRepo.findById(postId).orElseThrow(()->new RuntimeException());
+        PostResponseDto responseDto = new PostResponseDto(postId,
+                                        findPost.getAccount().getUsername(),
+                                        findPost.getTitle(),
+                                        findPost.getContent());
+
+        return responseDto;
     }
-    public Post writePost(Long accountId, String boardName, PostRequestDto requestDto) {
-        Board board = findBoard(boardName);
-        Account account = accountRepo.findById(accountId).orElseThrow();
+
+    //게시글 작성
+    public Long writePost( PostRequestDto requestDto) {
+        Board board = findBoard(requestDto.getBoardName());
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails userDetails = (UserDetails)principal;
+
+        String username = userDetails.getUsername();
+        Account account = accountRepo.findByNickname(username);
+        if(account == null){
+            throw new RuntimeException();
+        }
 
         Post post = new Post(requestDto.getTitle(), requestDto.getContent(),board,account);
-        return postRepo.save(post);
+
+        return postRepo.save(post).getId();
     }
 
+    //게시물 수정
+    public Long updatePost(UpdateRequestDto updateRequestDto) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails userDetails = (UserDetails)principal;
 
-    public Post updatePost(Long postId, Long accountId, PostRequestDto requestDto) {
-        Post post = getPost(postId);
-        Account account = post.getAccount();
-        if (!accountId.equals(account.getId())) {
-            //해당 리소스 오너가 아님
+        String username = userDetails.getUsername();
+        Account SecurityHolder_account = accountRepo.findByNickname(username);
+        if(SecurityHolder_account == null){
+            throw new DeniedAccessEx("자신의 게시물만 수정할 수 있습니다.");
         }
-        Board board = boardRepo.findByName(requestDto.getBoardName());
-        post.updatePost(board,requestDto.getTitle(), requestDto.getContent());
-        return post;
+        Long requestPostId = updateRequestDto.getPostId();
+
+        Post post = postRepo.findById(requestPostId).orElseThrow(()-> new RuntimeException("처리중 오류가 발생하였습니다."));
+        Long requestAccountIdOfPost= post.getAccount().getId();
+
+        if (!requestAccountIdOfPost.equals(SecurityHolder_account.getId())) { //요청온 post의 accountId와 현재 시큐리티홀더의 accountId 비교
+            //해당 리소스 오너가 아님
+            throw new DeniedAccessEx("자신의 게시물만 수정할 수 있습니다.");
+        }
+        Board board = boardRepo.findByName(updateRequestDto.getBoardName());
+        post.updatePost(board,updateRequestDto.getTitle(), updateRequestDto.getContent());
+        return post.getId();
     }
 
     // 게시물을 삭제합니다. 게시물 등록자와 로그인 회원정보가 틀리면 CNotOwnerException 처리합니다.
-    public boolean deletePost(Long postId, Long accountId) {
-        Post post = getPost(postId);
-        Account account = post.getAccount();
-        if (!accountId.equals(account.getId())){
-            //유저를 찾을 수 없음
+    public boolean deletePost(Long requestPostId) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails userDetails = (UserDetails)principal;
+
+        String username = userDetails.getUsername();
+        Account SecurityHolder_account = accountRepo.findByNickname(username);
+        if(SecurityHolder_account == null){
+            throw new DeniedAccessEx("자신의 게시물만 제거할 수 있습니다.");
         }
 
-        postRepo.delete(post);
+        Post findPost = postRepo.findById(requestPostId).orElseThrow(()-> new RuntimeException("처리중 오류가 발생하였습니다."));
+        Account account = findPost.getAccount();
+
+        if (!SecurityHolder_account.getId().equals(account.getId())){
+            //유저를 찾을 수 없음
+            throw new DeniedAccessEx("자신의 게시물만 제거할 수 있습니다.");
+        }
+
+        postRepo.delete(findPost);
         return true;
     }
 

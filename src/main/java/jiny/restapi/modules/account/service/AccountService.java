@@ -1,8 +1,7 @@
 package jiny.restapi.modules.account.service;
 
-import jiny.restapi.config.security.JwtTokenProvider;
 import jiny.restapi.modules.account.controller.dto.SignUpForm;
-import jiny.restapi.modules.account.controller.exception.DuplicatedAccountEx;
+import jiny.restapi.modules.common.exception.account.DuplicatedAccountEx;
 import jiny.restapi.modules.account.domain.UserAccount;
 import jiny.restapi.modules.account.domain.entity.Account;
 import jiny.restapi.modules.account.domain.entity.Authority;
@@ -16,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
