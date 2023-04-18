@@ -63,7 +63,7 @@ public class SignController {
     }
 
     @PostMapping(value = "/signIn")
-    public SingleResult<SignInResponseDto> signIn(@Parameter(description = "폼") @RequestBody SignInForm signInForm){
+    public SingleResult<SignInResponseDto> signIn(@RequestBody SignInForm signInForm){
         Account account = accountRepo.findByNickname(signInForm.getNickname());
         if(account==null){
             throw new IllegalArgumentException("아이디 및 비밀번호가 일치하지 않습니다.");

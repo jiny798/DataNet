@@ -31,7 +31,7 @@ public class PostController {
     private final ResponseService responseService;
 
     //게시물 리스트 조회
-    @GetMapping(value = "/{boardName}/post")
+    @GetMapping(value = "/{boardName}")
     @Operation(summary = "게시물 리스트 조회", description = "게시판 종류에 따라 게시물 리스트를 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "게시물 리스트를 조회하였습니다.",
@@ -39,8 +39,9 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "서버 내부에 문제가 발생하였습니다.",
                     content = @Content(schema = @Schema(implementation = CommonResult.class))),
     })
-    public ListResult<PostResponseDto> getPosts(@PathVariable String bordName){
-        List<PostResponseDto> list = boardService.findPosts(bordName);
+    public ListResult<PostResponseDto> getPosts(@PathVariable String boardName){
+        log.info("getPosts : {}",boardName);
+        List<PostResponseDto> list = boardService.findPosts(boardName);
         return responseService.getListResult(list);
     }
 
